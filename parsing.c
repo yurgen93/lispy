@@ -31,7 +31,7 @@ typedef enum {
         LVAL_SEXPR
 } lval_type;
 
-typedef struct {
+typedef struct lval {
         lval_type type;
         long num;
 
