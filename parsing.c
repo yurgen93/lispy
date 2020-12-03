@@ -42,6 +42,14 @@ typedef struct {
         struct lval ** cell;
 } lval;
 
+void lval_print(lval * v);
+lval * lval_eval_sexpr(lval * v);
+
+lval * lval_pop(lval * v, int i);
+lval * lval_take(lval * v, int i);
+
+lval * builtin_op(lval * v, char * op);
+
 /* lval CONSTRUCTORS */
 
 lval *lval_num(long x) {
@@ -108,6 +116,22 @@ lval * lval_add(lval * v, lval * x) {
         return v;
 }
 
+lval * lval_pop(lval * v, int i) {
+        lval * x = v->cell[i];
+
+        memmove(&v->cell[i], &v->cell[i + 1], sizeof(lval *) * v->count - i - 1);
+        v->count--;
+
+        v->cell = realloc(v->cell, sizeof(lval *) * v->count);
+        return x;
+}
+
+lval * lval_take(lval * v, int i) {
+        lval * x = lval_pop(v, i);
+        lval_del(v);
+        return x;
+}
+
 /* CREATE lval from AST element */
 
 lval *lval_read_num(mpc_ast_t * tag) {
@@ -143,8 +167,6 @@ lval * lval_read(mpc_ast_t * tag) {
 
 /* lval printing functions */
 
-void lval_print(lval * v);
-
 void lval_expr_print(lval * v, char open, char close) {
         putchar(open);
 
@@ -173,39 +195,87 @@ void lval_println(lval * v) {
 
 /* evaluation functions */
 
-// lval eval_op(lval x, char * op, lval y) {
-//         if (x.type == LVAL_ERR) return x;
-//         if (y.type == LVAL_ERR) return y;
+lval * lval_eval(lval * v) {
+        if (v->type == LVAL_SEXPR) return lval_eval_sexpr(v);
+        return v;
+}
 
-//         if (strcmp(op, "+") == 0) return lval_num(x.num + y.num);
-//         if (strcmp(op, "-") == 0) return lval_num(x.num - y.num);
-//         if (strcmp(op, "*") == 0) return lval_num(x.num + y.num);
-//         if (strcmp(op, "/") == 0) return (y.num == 0) ? lval_err(LERR_DIV_ZERO) : lval_num(x.num / y.num);
-//         if (strcmp(op, "\%") == 0) return (y.num == 0) ? lval_err(LERR_DIV_ZERO) : lval_num(x.num % y.num);
+lval * lval_eval_sexpr(lval * v) {
+        for (int i = 0; i < v->count; i++)
+                v->cell[i] = lval_eval(v->cell[i]);
 
-//         return lval_err(LERR_BAD_OP);
-// }
+        for (int i = 0; i < v->count; i++) {
+                if (v->cell[i]->type != LVAL_NUM)
+                        return lval_take(v, i);
+        }
 
-// lval eval(mpc_ast_t * tag) {
-//         if (strstr(tag->tag, "number")) {
-//                 errno = 0;
-//                 long x = strtol(tag->contents, NULL, 10);
-//                 return errno == ERANGE ? lval_err(LERR_BAD_NUM) : lval_num(x);
-//         }
+        if (v->count == 0) return v;
 
-//         char * op = tag->children[1]->contents;
+        if (v->count == 1) lval_take(v, 0);
 
-//         lval x = eval(tag->children[2]);
+        lval * f = lval_pop(v, 0);
 
-//         int i = 3;
-//         while (strstr(tag->children[i]->tag, "expr"))
-//         {
-//                 x = eval_op(x, op, eval(tag->children[i]));
-//                 i++;
-//         }
+        if (f->type != LVAL_SYM) {
+                lval_del(f);
+                lval_del(v);
+                return lval_err("S-expression Does not start with symbol!");
+        }
 
-//         return x;
-// }
+        lval * result = builtin_op(v, f->sym);
+        lval_del(f);
+        return result;
+}
+
+lval * builtin_op(lval * v, char * op) {
+        for (int i = 0; i < v->count; i++) {
+                if (v->cell[i]->type != LVAL_NUM) {
+                        lval_del(v);
+                        return lval_err("Cannot operate on non-number!");
+                }
+        }
+
+        lval * x = lval_pop(v, 0);
+
+        if ((strcmp(op, "-") == 0) && v->count == 0)
+                x->num = - x->num;
+
+        while (v->count > 0) {
+
+                lval * y = lval_pop(v, 0);
+
+                if (strcmp(op, "+") == 0) x->num += y->num;
+                if (strcmp(op, "-") == 0) x->num -= y->num;
+                if (strcmp(op, "*") == 0) x->num *= y->num;
+                if (strcmp(op, "/") == 0) {
+                        if (y->num == 0) {
+                                lval_del(x);
+                                lval_del(y);
+                                x = lval_err("Division By Zero!");
+                                break;
+                        }
+
+                        x->num /= y->num;
+                }
+                if (strcmp(op, "%") == 0) {
+                        if (y->num == 0) {
+                                lval_del(x);
+                                lval_del(y);
+                                x = lval_err("Division By Zero!");
+                                break;
+                        }
+
+                        x->num %= y->num;
+                }
+
+                lval_del(y);
+
+        }
+
+        lval_del(v);
+
+        return x;
+
+}
 
 int main(int argc, char** argv) {
         mpc_parser_t
