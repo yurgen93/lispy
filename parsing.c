@@ -119,7 +119,7 @@ lval * lval_add(lval * v, lval * x) {
 lval * lval_pop(lval * v, int i) {
         lval * x = v->cell[i];
 
-        memmove(&v->cell[i], &v->cell[i + 1], sizeof(lval *) * v->count - i - 1);
+        memmove(&v->cell[i], &v->cell[i + 1], sizeof(lval *) * (v->count - i - 1));
         v->count--;
 
         v->cell = realloc(v->cell, sizeof(lval *) * v->count);
@@ -149,7 +149,7 @@ lval * lval_read(mpc_ast_t * tag) {
         lval * x = NULL;
 
         // ">" means root
-        if (strstr(tag->tag, ">")) x = lval_sexpr();
+        if (strcmp(tag->tag, ">") == 0) x = lval_sexpr();
         if (strstr(tag->tag, "sexpr")) x = lval_sexpr();
 
         for (int i = 0; i < tag->children_num; i++) {
@@ -204,14 +204,13 @@ lval * lval_eval_sexpr(lval * v) {
         for (int i = 0; i < v->count; i++)
                 v->cell[i] = lval_eval(v->cell[i]);
 
-        for (int i = 0; i < v->count; i++) {
-                if (v->cell[i]->type != LVAL_NUM)
+        for (int i = 0; i < v->count; i++)
+                if (v->cell[i]->type == LVAL_ERR)
                         return lval_take(v, i);
-        }
 
         if (v->count == 0) return v;
 
-        if (v->count == 1) lval_take(v, 0);
+        if (v->count == 1) return lval_take(v, 0);
 
         lval * f = lval_pop(v, 0);
 
@@ -304,7 +303,7 @@ int main(int argc, char** argv) {
         );
 
 
-        puts("Lispy Version 0.0.0.0.1");
+        puts("Lispy Version 0.0.0.0.5");
         puts("Press Ctrl+c to Exit\n");
 
 
@@ -314,7 +313,8 @@ int main(int argc, char** argv) {
                 add_history(input);
 
                 if (mpc_parse("<stdin>", input , Lispy, &r)) {
-                        lval * x = lval_read(r.output);
+                        lval * y = lval_read(r.output);
+                        lval * x = lval_eval(y);
                         lval_println(x);
                         lval_del(x);
                         mpc_ast_delete(r.output);
