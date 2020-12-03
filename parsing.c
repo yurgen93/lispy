@@ -24,6 +24,8 @@ void add_history(char* unused) {}
 #include <editline/readline.h>
 #endif
 
+#define LASSERT(args, cond, err) if (!(cond)) { lval_del(args); return lval_err(err); }
+
 typedef enum {
         LVAL_NUM,
         LVAL_ERR,
@@ -50,6 +52,8 @@ lval * lval_pop(lval * v, int i);
 lval * lval_take(lval * v, int i);
 
 lval * builtin_op(lval * v, char * op);
+
+lval * builtin(lval * v, char * func);
 
 /* lval CONSTRUCTORS */
 
@@ -141,6 +145,14 @@ lval * lval_pop(lval * v, int i) {
 lval * lval_take(lval * v, int i) {
         lval * x = lval_pop(v, i);
         lval_del(v);
+        return x;
+}
+
+lval *lval_join(lval * x, lval * y) {
+        while (y->count)
+                x = lval_add(x, lval_pop(y, 0));
+
+        lval_del(y);
         return x;
 }
 
@@ -236,7 +248,7 @@ lval * lval_eval_sexpr(lval * v) {
                 return lval_err("S-expression Does not start with symbol!");
         }
 
-        lval * result = builtin_op(v, f->sym);
+        lval * result = builtin(v, f->sym);
         lval_del(f);
         return result;
 }
@@ -289,7 +301,70 @@ lval * builtin_op(lval * v, char * op) {
         lval_del(v);
 
         return x;
+}
 
+lval *builtin_head(lval * v) {
+        LASSERT(v, v->count == 1, "Function 'head' passed too many arguments!");
+        LASSERT(v, v->cell[0]->type == LVAL_QEXPR, "Function 'head' passed incorrect types!");
+        LASSERT(v, v->cell[0]->count != 0, "Function 'head' passed {}!");
+
+        lval * x = lval_take(v, 0);
+
+        while (x->count > 1) lval_del(lval_pop(x, 1));
+        return x;
+}
+
+lval *builtin_tail(lval * v) {
+        LASSERT(v, v->count == 1, "Function 'tail' passed too many arguments!");
+        LASSERT(v, v->cell[0]->type == LVAL_QEXPR, "Function 'tail' passed incorrect types!");
+        LASSERT(v, v->cell[0]->count != 0, "Function 'tail' passed {}!");
+
+        lval * x = lval_take(v, 0);
+
+        lval_del(lval_pop(x, 0));
+
+        return x;
+}
+
+lval *builtin_list(lval * v) {
+        v->type = LVAL_QEXPR;
+        return v;
+}
+
+lval *builtin_eval(lval * v) {
+        LASSERT(v, v->count == 1, "Function 'eval' passed too many arguments!");
+        LASSERT(v, v->cell[0]->type == LVAL_QEXPR, "Function 'eval' passed incorrect type!");
+
+        lval * x = lval_take(v, 0);
+        x->type = LVAL_SEXPR;
+        return lval_eval(x);
+}
+
+lval *builtin_join(lval * v) {
+        for (int i = 0; i < v->count; i++) {
+                LASSERT(v, v->cell[i]->type == LVAL_QEXPR, "Function 'join' passed incorrect type!");
+        }
+
+        lval * x = lval_pop(v, 0);
+
+        while(v->count)
+                x = lval_join(x, lval_pop(v, 0));
+
+        lval_del(v);
+
+        return x;
+}
+
+lval *builtin(lval * v, char * func) {
+        if (strcmp("head", func) == 0) return builtin_head(v);
+        if (strcmp("tail", func) == 0) return builtin_tail(v);
+        if (strcmp("list", func) == 0) return builtin_list(v);
+        if (strcmp("join", func) == 0) return builtin_join(v);
+        if (strcmp("eval", func) == 0) return builtin_eval(v);
+        if (strstr("+-*/\%", func))      return builtin_op(v, func);
+
+        lval_del(v);
+        return lval_err("Unknown Function!");
 }
 
 int main(int argc, char** argv) {
@@ -306,12 +381,12 @@ int main(int argc, char** argv) {
         mpca_lang(
                 MPCA_LANG_DEFAULT,
                 " \
-                number: /-?[0-9]+/ ; \
-                symbol: '+' | '-' | '*' | '/' | '\%' ; \
-                sexpr: '(' <expr>* ')' ; \
-                qexpr: '{' <expr>* '}' ; \
-                expr: <number> | <symbol> | <sexpr> | <qexpr> ; \
-                lispy: /^/ <expr>* /$/ ; \
+                number : /-?[0-9]+/ ; \
+                symbol : '+' | '-' | '*' | '/' | '\%' | \"list\" | \"head\" | \"tail\" | \"join\" | \"eval\" ; \
+                sexpr  : '(' <expr>* ')' ; \
+                qexpr  : '{' <expr>* '}' ; \
+                expr   : <number> | <symbol> | <sexpr> | <qexpr> ; \
+                lispy  : /^/ <expr>* /$/ ; \
                 ",
                 Number,
                 Symbol,
