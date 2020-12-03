@@ -28,7 +28,8 @@ typedef enum {
         LVAL_NUM,
         LVAL_ERR,
         LVAL_SYM,
-        LVAL_SEXPR
+        LVAL_SEXPR,
+        LVAL_QEXPR
 } lval_type;
 
 typedef struct lval {
@@ -91,6 +92,16 @@ lval *lval_sexpr(void) {
         return v;
 }
 
+lval *lval_qexpr(void) {
+        lval * v = malloc(sizeof(lval));
+
+        v->type = LVAL_QEXPR;
+        v->count = 0;
+        v->cell = NULL;
+
+        return v;
+}
+
 /* lval DESTRUCTOR */
 
 void lval_del(lval * v) {
@@ -99,6 +110,7 @@ void lval_del(lval * v) {
                 case LVAL_ERR: free(v->err); break;
                 case LVAL_SYM: free(v->sym); break;
                 case LVAL_SEXPR:
+                case LVAL_QEXPR:
                         for (int i = 0; i < v->count; i++) lval_del(v->cell[i]);
                         free(v->cell);
                         break;
@@ -151,12 +163,15 @@ lval * lval_read(mpc_ast_t * tag) {
         // ">" means root
         if (strcmp(tag->tag, ">") == 0) x = lval_sexpr();
         if (strstr(tag->tag, "sexpr")) x = lval_sexpr();
+        if (strstr(tag->tag, "qexpr")) x = lval_qexpr();
 
         for (int i = 0; i < tag->children_num; i++) {
                 mpc_ast_t * child_tag = tag->children[i];
 
                 if (strcmp(child_tag->contents, "(") == 0) continue;
                 if (strcmp(child_tag->contents, ")") == 0) continue;
+                if (strcmp(child_tag->contents, "{") == 0) continue;
+                if (strcmp(child_tag->contents, "}") == 0) continue;
                 if (strcmp(child_tag->tag, "regex") == 0) continue;
 
                 x = lval_add(x, lval_read(child_tag));
@@ -185,6 +200,7 @@ void lval_print(lval * v) {
                 case LVAL_ERR:   printf("Error: %s", v->err); break;
                 case LVAL_SYM:   printf("%s", v->sym); break;
                 case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
+                case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
         }
 }
 
@@ -281,6 +297,7 @@ int main(int argc, char** argv) {
                 *Number = mpc_new("number"),
                 *Symbol = mpc_new("symbol"),
                 *Sexpr = mpc_new("sexpr"),
+                *Qexpr = mpc_new("qexpr"),
                 *Expr = mpc_new("expr"),
                 *Lispy = mpc_new("lispy");
 
@@ -291,19 +308,21 @@ int main(int argc, char** argv) {
                 " \
                 number: /-?[0-9]+/ ; \
                 symbol: '+' | '-' | '*' | '/' | '\%' ; \
-                sexpr:  '(' <expr>* ')' ; \
-                expr: <number> | <symbol> | <sexpr> ; \
+                sexpr: '(' <expr>* ')' ; \
+                qexpr: '{' <expr>* '}' ; \
+                expr: <number> | <symbol> | <sexpr> | <qexpr> ; \
                 lispy: /^/ <expr>* /$/ ; \
                 ",
                 Number,
                 Symbol,
                 Sexpr,
+                Qexpr,
                 Expr,
                 Lispy
         );
 
 
-        puts("Lispy Version 0.0.0.0.5");
+        puts("Lispy Version 0.0.0.0.6");
         puts("Press Ctrl+c to Exit\n");
 
 
@@ -326,7 +345,7 @@ int main(int argc, char** argv) {
                 free(input);
         }
 
-        mpc_cleanup(5, Number, Symbol, Sexpr, Expr, Lispy);
+        mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
         return 0;
 }
