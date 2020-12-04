@@ -72,6 +72,8 @@ struct lval {
         struct lval ** cell;
 
         lbuiltin fun;
+
+        char * fun_name;
 };
 
 struct lenv {
@@ -153,11 +155,21 @@ lval *lval_qexpr(void) {
         return v;
 }
 
-lval *lval_fun(lbuiltin fun) {
+lval *lval_fun(lbuiltin fun, char * fun_name) {
         lval * v = malloc(sizeof(lval));
 
         v->type = LVAL_FUN;
         v->fun = fun;
+        v->fun_name = NULL;
+
+        // builtin functions need a name
+        if (fun_name == NULL) {
+                v->fun_name = NULL;
+        } else {
+                v->fun_name = malloc(512);
+                strcpy(v->fun_name, fun_name);
+                v->fun_name = realloc(v->fun_name, strlen(v->fun_name) + 1);
+        }
 
         return v;
 }
@@ -167,7 +179,9 @@ lval *lval_fun(lbuiltin fun) {
 void lval_del(lval * v) {
         switch (v->type) {
                 case LVAL_NUM: break;
-                case LVAL_FUN: break;
+                case LVAL_FUN:
+                        if (v->fun_name != NULL) free(v->fun_name);
+                        break;
                 case LVAL_ERR: free(v->err); break;
                 case LVAL_SYM: free(v->sym); break;
                 case LVAL_SEXPR:
@@ -220,7 +234,14 @@ lval *lval_copy(lval * v) {
 
         switch(v->type) {
                 case LVAL_NUM: copy->num = v->num; break;
-                case LVAL_FUN: copy->fun = v->fun; break;
+                case LVAL_FUN:
+                        copy->fun = v->fun;
+                        if (v->fun_name != NULL) {
+                                copy->fun_name = malloc(strlen(v->fun_name) + 1);
+                                strcpy(copy->fun_name, v->fun_name);
+                        } else
+                                copy->fun_name = NULL;
+                        break;
                 case LVAL_SYM:
                         copy->sym = malloc(strlen(v->sym) + 1);
                         strcpy(copy->sym, v->sym);
@@ -310,7 +331,9 @@ void lval_print(lval * v) {
                 case LVAL_SYM:   printf("%s", v->sym); break;
                 case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
                 case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
-                case LVAL_FUN:   printf("<function>"); break;
+                case LVAL_FUN:
+                        printf("<function: %s>", (v->fun_name == NULL) ? "custom" : v->fun_name);
+                        break;
         }
 }
 
@@ -559,7 +582,7 @@ void lenv_put(lenv * e, lval * name, lval * value) {
 
 void lenv_add_builtin(lenv * e, char * name, lbuiltin fun) {
         lval * name_symbol = lval_sym(name);
-        lval * value = lval_fun(fun);
+        lval * value = lval_fun(fun, name);
         lenv_put(e, name_symbol, value);
         lval_del(name_symbol);
         lval_del(value);
