@@ -6,13 +6,13 @@ created using http://www.buildyourownlisp.com/
 ### Commands
 ```bash
 # compile
-gcc -std=c99 -Wall parsing.c mpc.c -ledit -lm -o parsing.out
+gcc -std=c99 -Wall repl.c mpc.c -ledit -lm -o repl.out
 
 # run REPL
 ./parsing.out
 
 # with memory check
-gcc -std=c99 -Wall parsing.c mpc.c -ledit -lm -fsanitize=address -fno-common -fno-omit-frame-pointer -o parsing.out
+gcc -std=c99 -Wall repl.c mpc.c -ledit -lm -fsanitize=address -fno-common -fno-omit-frame-pointer -o repl.out
 ```
 
 ### REPL example
