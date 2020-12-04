@@ -71,9 +71,8 @@ struct lval {
         int count;
         struct lval ** cell;
 
-        lbuiltin fun;
-
-        char * fun_name;
+        lbuiltin builtin;
+        char * builtin_name;
 };
 
 struct lenv {
@@ -159,16 +158,16 @@ lval *lval_fun(lbuiltin fun, char * fun_name) {
         lval * v = malloc(sizeof(lval));
 
         v->type = LVAL_FUN;
-        v->fun = fun;
-        v->fun_name = NULL;
+        v->builtin = fun;
+        v->builtin_name = NULL;
 
         // builtin functions need a name
         if (fun_name == NULL) {
-                v->fun_name = NULL;
+                v->builtin_name = NULL;
         } else {
-                v->fun_name = malloc(512);
-                strcpy(v->fun_name, fun_name);
-                v->fun_name = realloc(v->fun_name, strlen(v->fun_name) + 1);
+                v->builtin_name = malloc(512);
+                strcpy(v->builtin_name, fun_name);
+                v->builtin_name = realloc(v->builtin_name, strlen(v->builtin_name) + 1);
         }
 
         return v;
@@ -180,7 +179,7 @@ void lval_del(lval * v) {
         switch (v->type) {
                 case LVAL_NUM: break;
                 case LVAL_FUN:
-                        if (v->fun_name != NULL) free(v->fun_name);
+                        if (v->builtin_name != NULL) free(v->builtin_name);
                         break;
                 case LVAL_ERR: free(v->err); break;
                 case LVAL_SYM: free(v->sym); break;
@@ -235,12 +234,12 @@ lval *lval_copy(lval * v) {
         switch(v->type) {
                 case LVAL_NUM: copy->num = v->num; break;
                 case LVAL_FUN:
-                        copy->fun = v->fun;
-                        if (v->fun_name != NULL) {
-                                copy->fun_name = malloc(strlen(v->fun_name) + 1);
-                                strcpy(copy->fun_name, v->fun_name);
+                        copy->builtin = v->builtin;
+                        if (v->builtin_name != NULL) {
+                                copy->builtin_name = malloc(strlen(v->builtin_name) + 1);
+                                strcpy(copy->builtin_name, v->builtin_name);
                         } else
-                                copy->fun_name = NULL;
+                                copy->builtin_name = NULL;
                         break;
                 case LVAL_SYM:
                         copy->sym = malloc(strlen(v->sym) + 1);
@@ -332,7 +331,7 @@ void lval_print(lval * v) {
                 case LVAL_SEXPR: lval_expr_print(v, '(', ')'); break;
                 case LVAL_QEXPR: lval_expr_print(v, '{', '}'); break;
                 case LVAL_FUN:
-                        printf("<function: %s>", (v->fun_name == NULL) ? "custom" : v->fun_name);
+                        printf("<function: %s>", (v->builtin_name == NULL) ? "custom" : v->builtin_name);
                         break;
         }
 }
@@ -377,7 +376,7 @@ lval * lval_eval_sexpr(lenv * e, lval * v) {
                 return lval_err("first element is not a function");
         }
 
-        lval * result = f->fun(e, v);
+        lval * result = f->builtin(e, v);
         lval_del(f);
         return result;
 }
