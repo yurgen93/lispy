@@ -826,6 +826,39 @@ lval * builtin_ne(lenv * e, lval * v) {
         return builtin_cmp(e, v, "!=");
 }
 
+/* logical operators */
+lval * builtin_logical_and(lenv * e, lval * v) {
+        LASSERT_NUM("&&", v, 2);
+        LASSERT_TYPE("&&", v, 0, LVAL_NUM);
+        LASSERT_TYPE("&&", v, 1, LVAL_NUM);
+
+        int r = v->cell[0]->num && v->cell[1]->num;
+
+        lval_del(v);
+        return lval_num(r);
+}
+
+lval * builtin_logical_or(lenv * e, lval * v) {
+        LASSERT_NUM("||", v, 2);
+        LASSERT_TYPE("||", v, 0, LVAL_NUM);
+        LASSERT_TYPE("||", v, 1, LVAL_NUM);
+
+        int r = v->cell[0]->num || v->cell[1]->num;
+
+        lval_del(v);
+        return lval_num(r);
+}
+
+lval * builtin_logical_not(lenv * e, lval * v) {
+        LASSERT_NUM("!", v, 1);
+        LASSERT_TYPE("!", v, 0, LVAL_NUM);
+
+        int r = !v->cell[0]->num;
+
+        lval_del(v);
+        return lval_num(r);
+}
+
 /* operators */
 
 lval * builtin_if(lenv * e, lval * v) {
@@ -992,6 +1025,9 @@ void lenv_add_builtins(lenv* e) {
 
         /* logical functions */
         lenv_add_builtin(e, "if", builtin_if);
+        lenv_add_builtin(e, "&&", builtin_logical_and);
+        lenv_add_builtin(e, "||", builtin_logical_or);
+        lenv_add_builtin(e, "!", builtin_logical_not);
 }
 
 int main(int argc, char** argv) {
@@ -1010,7 +1046,7 @@ int main(int argc, char** argv) {
                 MPCA_LANG_DEFAULT,
                 " \
                 number : /-?[0-9]+/ ; \
-                symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&\%]+/ ; \
+                symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&\%|]+/ ; \
                 sexpr  : '(' <expr>* ')' ; \
                 qexpr  : '{' <expr>* '}' ; \
                 expr   : <number> | <symbol> | <sexpr> | <qexpr> ; \
