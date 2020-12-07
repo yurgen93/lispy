@@ -9,7 +9,7 @@ created using http://www.buildyourownlisp.com/
 gcc -std=c99 -Wall repl.c mpc.c -ledit -lm -o repl.out
 
 # run REPL
-./parsing.out
+./repl.out
 
 # with memory check
 gcc -std=c99 -Wall repl.c mpc.c -ledit -lm -fsanitize=address -fno-common -fno-omit-frame-pointer -o repl.out
