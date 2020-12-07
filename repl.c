@@ -719,6 +719,31 @@ lval * builtin_exit(lenv * e, lval * v) {
         return exit;
 }
 
+lval * builtin_fun(lenv * e, lval * v) {
+        LASSERT_NUM("fun", v, 2);
+        LASSERT_TYPE("fun", v, 0, LVAL_QEXPR);
+        LASSERT_TYPE("fun", v, 1, LVAL_QEXPR);
+
+        for (int i = 0; i < v->cell[0]->count; i++) {
+                LASSERT(v, (v->cell[0]->cell[i]->type == LVAL_SYM),
+                "Function 'fun' cannot define non-symbol. "
+                "Got %s, expected %s",
+                ltype_name(v->cell[0]->cell[i]->type),
+                ltype_name(LVAL_SYM)
+                );
+        }
+
+        LASSERT(v, v->cell[0]->count != 0, "Function 'fun' first argument cannot be '{}'");
+
+        lval * func_name = lval_pop(v->cell[0], 0);
+        lval * formals = v->cell[0];
+        lval * body = v->cell[1];
+
+        lenv_def(e, func_name, lval_lambda(formals, body));
+
+        return lval_sexpr();
+}
+
 /* lenv CONSTRUCOR */
 
 lenv * lenv_new(void) {
@@ -828,6 +853,7 @@ void lenv_add_builtins(lenv* e) {
         lenv_add_builtin(e, "def", builtin_def);
         lenv_add_builtin(e, "=", builtin_put);
         lenv_add_builtin(e, "\\", builtin_lambda);
+        lenv_add_builtin(e, "fun", builtin_fun);
 
         /* System functions */
         lenv_add_builtin(e, "exit", builtin_exit);
