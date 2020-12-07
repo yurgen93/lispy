@@ -109,6 +109,7 @@ void lenv_def(lenv * e, lval * name, lval * value);
 
 lval * builtin_eval(lenv * e, lval * v);
 lval * builtin_var(lenv * e, lval * v, char * op);
+lval *builtin_list(lenv * e, lval * v);
 
 /* lval CONSTRUCTORS */
 
@@ -457,6 +458,22 @@ lval *lval_call(lenv * e, lval * func, lval * args) {
 
                 lval * sym = lval_pop(func->formals, 0);
 
+                if (strcmp(sym->sym, "&") == 0) {
+                        if (func->formals->count != 1) {
+                                lval_del(args);
+                                return lval_err(
+                                        "Function format invalid. "
+                                        "Symbol '&' not followed by single symbol."
+                                );
+                        }
+
+                        lval * nsym = lval_pop(func->formals, 0);
+                        lenv_put(func->env, nsym, builtin_list(e, args));
+                        lval_del(sym);
+                        lval_del(nsym);
+                        break;
+                }
+
                 lval * val = lval_pop(args, 0);
 
                 lenv_put(func->env, sym, val);
@@ -467,6 +484,24 @@ lval *lval_call(lenv * e, lval * func, lval * args) {
         }
 
         lval_del(args);
+
+        if (func->formals->count > 0 && strcmp(func->formals->cell[0]->sym, "&") == 0) {
+                if (func->formals->count != 2) {
+                        return lval_err(
+                                "Function format invalid. "
+                                "Symbol '&' not followed by single symbol."
+                        );
+                }
+
+                lval_del(lval_pop(func->formals, 0));
+
+                lval * sym = lval_pop(func->formals, 0);
+                lval * value = lval_qexpr();
+
+                lenv_put(func->env, sym, value);
+                lval_del(sym);
+                lval_del(value);
+        }
 
         if (func->formals->count == 0) {
                 func->env->parent = e;
