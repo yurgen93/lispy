@@ -635,8 +635,8 @@ lval * builtin_list(lenv * e, lval * v) {
 }
 
 lval * builtin_eval(lenv * e, lval * v) {
-        LASSERT_NUM("tail", v, 1);
-        LASSERT_TYPE("tail", v, 0, LVAL_QEXPR);
+        LASSERT_NUM("eval", v, 1);
+        LASSERT_TYPE("eval", v, 0, LVAL_QEXPR);
 
         lval * x = lval_take(v, 0);
         x->type = LVAL_SEXPR;
@@ -799,6 +799,48 @@ lval * builtin_not_equal(lenv * e, lval * v) {
         LCOMPARE(!=, v);
 }
 
+/* operators */
+
+lval * builtin_if(lenv * e, lval * v) {
+        LASSERT(
+                v,
+                (v->count == 2 || v->count == 3),
+                "Function 'if' passed incorrect number of argument. Got %d, expected 2 or 3.",
+                v->count
+        );
+        LASSERT_TYPE("if", v, 0, LVAL_QEXPR);
+        LASSERT_TYPE("if", v , 1, LVAL_QEXPR);
+        // if else branch is present
+        if (v->count == 3) LASSERT_TYPE("if", v, 2, LVAL_QEXPR);
+
+        lval * cond_expr = lval_pop(v, 0);
+
+        cond_expr->type = LVAL_SEXPR;
+
+        lval * cond_res = lval_eval(e, cond_expr);
+
+        if (cond_res->type == LVAL_ERR) {
+                lval_del(v);
+                return cond_res;
+        }
+
+        lval * branch; // if or else branch
+
+        // treat not number like TRUE
+        if (cond_res->type != LVAL_NUM) branch = lval_pop(v, 0);
+        else if (cond_res->num != 0) branch = lval_pop(v, 0);
+        else if (v->count == 2) branch = lval_pop(v, 1);
+        else branch = NULL;
+
+        lval_del(v);
+        lval_del(cond_res);
+
+        if (branch == NULL) return lval_sexpr();
+
+        branch->type = LVAL_SEXPR;
+        return lval_eval(e, branch);
+}
+
 /* lenv CONSTRUCOR */
 
 lenv * lenv_new(void) {
@@ -920,6 +962,9 @@ void lenv_add_builtins(lenv* e) {
 
         /* System functions */
         lenv_add_builtin(e, "exit", builtin_exit);
+
+        /* logical functions */
+        lenv_add_builtin(e, "if", builtin_if);
 }
 
 int main(int argc, char** argv) {
