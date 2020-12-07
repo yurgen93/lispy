@@ -44,6 +44,11 @@ void add_history(char* unused) {}
                 LASSERT(args, args->count != 0, \
                 "Function '%s' passed {} for argument %d", func, index)
 
+#define LCOMPARE(operator, args) \
+        int r = args->cell[0]->num operator args->cell[1]->num; \
+        lval_del(args); \
+        return lval_num(r)
+
 struct lval;
 struct lenv;
 
@@ -744,6 +749,56 @@ lval * builtin_fun(lenv * e, lval * v) {
         return lval_sexpr();
 }
 
+/* comparasion functions */
+
+lval * builtin_greater_than(lenv * e, lval * v) {
+        LASSERT_NUM(">", v, 2);
+        LASSERT_TYPE(">", v, 0, LVAL_NUM);
+        LASSERT_TYPE(">", v, 1, LVAL_NUM);
+
+        LCOMPARE(>, v);
+}
+
+lval * builtin_greater_than_or_equal(lenv * e, lval * v) {
+        LASSERT_NUM(">=", v, 2);
+        LASSERT_TYPE(">=", v, 0, LVAL_NUM);
+        LASSERT_TYPE(">=", v, 1, LVAL_NUM);
+
+        LCOMPARE(>=, v);
+}
+
+lval * builtin_less_than(lenv * e, lval * v) {
+        LASSERT_NUM("<", v, 2);
+        LASSERT_TYPE("<", v, 0, LVAL_NUM);
+        LASSERT_TYPE("<", v, 1, LVAL_NUM);
+
+        LCOMPARE(<, v);
+}
+
+lval * builtin_less_than_or_equal(lenv * e, lval * v) {
+        LASSERT_NUM("<=", v, 2);
+        LASSERT_TYPE("<=", v, 0, LVAL_NUM);
+        LASSERT_TYPE("<=", v, 1, LVAL_NUM);
+
+        LCOMPARE(<, v);
+}
+
+lval * builtin_equal(lenv * e, lval * v) {
+        LASSERT_NUM("==", v, 2);
+        LASSERT_TYPE("==", v, 0, LVAL_NUM);
+        LASSERT_TYPE("==", v, 1, LVAL_NUM);
+
+        LCOMPARE(==, v);
+}
+
+lval * builtin_not_equal(lenv * e, lval * v) {
+        LASSERT_NUM("!=", v, 2);
+        LASSERT_TYPE("!=", v, 0, LVAL_NUM);
+        LASSERT_TYPE("!=", v, 1, LVAL_NUM);
+
+        LCOMPARE(!=, v);
+}
+
 /* lenv CONSTRUCOR */
 
 lenv * lenv_new(void) {
@@ -848,6 +903,14 @@ void lenv_add_builtins(lenv* e) {
         lenv_add_builtin(e, "*", builtin_mul);
         lenv_add_builtin(e, "/", builtin_div);
         lenv_add_builtin(e, "\%", builtin_mod);
+
+        /* Comparasion functions */
+        lenv_add_builtin(e, ">", builtin_greater_than);
+        lenv_add_builtin(e, "<", builtin_less_than);
+        lenv_add_builtin(e, ">=", builtin_greater_than_or_equal);
+        lenv_add_builtin(e, "<=", builtin_less_than_or_equal);
+        lenv_add_builtin(e, "==", builtin_equal);
+        lenv_add_builtin(e, "!=", builtin_not_equal);
 
         /* Variable functions */
         lenv_add_builtin(e, "def", builtin_def);
