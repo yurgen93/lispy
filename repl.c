@@ -61,6 +61,11 @@ typedef enum {
         LVAL_QEXPR
 } lval_type;
 
+typedef enum {
+        L_ERROR_EXIT,
+        L_ERROR_STANDARD,
+} l_error_type;
+
 struct lval {
         lval_type type;
 
@@ -68,6 +73,7 @@ struct lval {
         long num;
         char * err;
         char * sym;
+        l_error_type errtype;
 
         /* Expression */
         int count;
@@ -203,6 +209,12 @@ lval * lval_lambda(lval * formals, lval * body) {
         v->body = lval_copy(body);
 
         return v;
+}
+
+lval * lval_exit_error(void) {
+        lval * exit_error = lval_err("EXIT");
+        exit_error->errtype = L_ERROR_EXIT;
+        return exit_error;
 }
 
 /* lval DESTRUCTOR */
@@ -701,6 +713,12 @@ lval * builtin_var(lenv* e, lval * v, char* func) {
         return lval_sexpr();
 }
 
+lval * builtin_exit(lenv * e, lval * v) {
+        lval * exit = lval_exit_error();
+        lval_del(v);
+        return exit;
+}
+
 /* lenv CONSTRUCOR */
 
 lenv * lenv_new(void) {
@@ -810,6 +828,9 @@ void lenv_add_builtins(lenv* e) {
         lenv_add_builtin(e, "def", builtin_def);
         lenv_add_builtin(e, "=", builtin_put);
         lenv_add_builtin(e, "\\", builtin_lambda);
+
+        /* System functions */
+        lenv_add_builtin(e, "exit", builtin_exit);
 }
 
 int main(int argc, char** argv) {
@@ -822,6 +843,7 @@ int main(int argc, char** argv) {
                 *Lispy = mpc_new("lispy");
 
         mpc_result_t r;
+        int is_exit = 0;
 
         mpca_lang(
                 MPCA_LANG_DEFAULT,
@@ -848,13 +870,14 @@ int main(int argc, char** argv) {
         lenv * env = lenv_new();
         lenv_add_builtins(env);
 
-        while (1) {
+        while (!is_exit) {
                 char* input = readline("lispy> ");
 
                 add_history(input);
 
                 if (mpc_parse("<stdin>", input , Lispy, &r)) {
                         lval * x = lval_eval(env, lval_read(r.output));
+                        is_exit = (x->type == LVAL_ERR) && (x->errtype == L_ERROR_EXIT);
                         lval_println(x);
                         lval_del(x);
                         mpc_ast_delete(r.output);
