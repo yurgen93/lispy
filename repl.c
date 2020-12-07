@@ -98,7 +98,7 @@ lval * lval_copy(lval * v);
 lval * lval_call(lenv * e, lval * func, lval * args);
 
 lenv * lenv_new(void);
-lenv *lenv_copy(lenv * e);
+lenv * lenv_copy(lenv * e);
 void lenv_del(lenv * e);
 
 lval * builtin_op(lenv * e, lval * v, char * op);
@@ -109,11 +109,11 @@ void lenv_def(lenv * e, lval * name, lval * value);
 
 lval * builtin_eval(lenv * e, lval * v);
 lval * builtin_var(lenv * e, lval * v, char * op);
-lval *builtin_list(lenv * e, lval * v);
+lval * builtin_list(lenv * e, lval * v);
 
 /* lval CONSTRUCTORS */
 
-lval *lval_num(long x) {
+lval * lval_num(long x) {
         lval *v = malloc(sizeof(lval));
 
         v->type = LVAL_NUM;
@@ -122,7 +122,7 @@ lval *lval_num(long x) {
         return v;
 }
 
-lval *lval_err(char * fmt, ...) {
+lval * lval_err(char * fmt, ...) {
         lval *v = malloc(sizeof(lval));
 
         v->type = LVAL_ERR;
@@ -141,7 +141,7 @@ lval *lval_err(char * fmt, ...) {
         return v;
 }
 
-lval *lval_sym(char * symbol) {
+lval * lval_sym(char * symbol) {
         lval *v = malloc(sizeof(lval));
 
         v->type = LVAL_SYM;
@@ -151,7 +151,7 @@ lval *lval_sym(char * symbol) {
         return v;
 }
 
-lval *lval_sexpr(void) {
+lval * lval_sexpr(void) {
         lval *v = malloc(sizeof(lval));
 
         v->type = LVAL_SEXPR;
@@ -161,7 +161,7 @@ lval *lval_sexpr(void) {
         return v;
 }
 
-lval *lval_qexpr(void) {
+lval * lval_qexpr(void) {
         lval * v = malloc(sizeof(lval));
 
         v->type = LVAL_QEXPR;
@@ -171,7 +171,7 @@ lval *lval_qexpr(void) {
         return v;
 }
 
-lval *lval_fun(lbuiltin fun, char * fun_name) {
+lval * lval_fun(lbuiltin fun, char * fun_name) {
         lval * v = malloc(sizeof(lval));
 
         v->type = LVAL_FUN;
@@ -256,7 +256,7 @@ lval * lval_take(lval * v, int i) {
         return x;
 }
 
-lval *lval_join(lval * x, lval * y) {
+lval * lval_join(lval * x, lval * y) {
         while (y->count)
                 x = lval_add(x, lval_pop(y, 0));
 
@@ -264,7 +264,7 @@ lval *lval_join(lval * x, lval * y) {
         return x;
 }
 
-lval *lval_copy(lval * v) {
+lval * lval_copy(lval * v) {
         lval * copy = malloc(sizeof(lval));
 
         copy->type = v->type;
@@ -589,7 +589,7 @@ lval * builtin_mod(lenv * e, lval * a) {
 
 /* BUILTIN FUNCTIONS */
 
-lval *builtin_head(lenv * e, lval * v) {
+lval * builtin_head(lenv * e, lval * v) {
         LASSERT_NUM("head", v, 1);
         LASSERT_TYPE("head", v, 0, LVAL_QEXPR);
         LASSERT_NOT_EMPTY("head", v, 0);
@@ -600,7 +600,7 @@ lval *builtin_head(lenv * e, lval * v) {
         return x;
 }
 
-lval *builtin_tail(lenv * e, lval * v) {
+lval * builtin_tail(lenv * e, lval * v) {
         LASSERT_NUM("tail", v, 1);
         LASSERT_TYPE("tail", v, 0, LVAL_QEXPR);
         LASSERT_NOT_EMPTY("tail", v, 0);
@@ -612,12 +612,12 @@ lval *builtin_tail(lenv * e, lval * v) {
         return x;
 }
 
-lval *builtin_list(lenv * e, lval * v) {
+lval * builtin_list(lenv * e, lval * v) {
         v->type = LVAL_QEXPR;
         return v;
 }
 
-lval *builtin_eval(lenv * e, lval * v) {
+lval * builtin_eval(lenv * e, lval * v) {
         LASSERT_NUM("tail", v, 1);
         LASSERT_TYPE("tail", v, 0, LVAL_QEXPR);
 
@@ -626,7 +626,7 @@ lval *builtin_eval(lenv * e, lval * v) {
         return lval_eval(e, x);
 }
 
-lval *builtin_join(lenv * e, lval * v) {
+lval * builtin_join(lenv * e, lval * v) {
         for (int i = 0; i < v->count; i++) {
                 LASSERT_TYPE("join", v, i, LVAL_QEXPR);
         }
@@ -641,7 +641,7 @@ lval *builtin_join(lenv * e, lval * v) {
         return x;
 }
 
-lval *builtin_lambda(lenv * e, lval * v) {
+lval * builtin_lambda(lenv * e, lval * v) {
         LASSERT_NUM("\\", v, 2);
         LASSERT_TYPE("\\", v, 0, LVAL_QEXPR);
         LASSERT_TYPE("\\", v, 1, LVAL_QEXPR);
@@ -658,15 +658,15 @@ lval *builtin_lambda(lenv * e, lval * v) {
         return lval_lambda(formals, body);
 }
 
-lval *builtin_def(lenv * e, lval * v) {
+lval * builtin_def(lenv * e, lval * v) {
         return builtin_var(e, v, "def");
 }
 
-lval *builtin_put(lenv * e, lval * v) {
+lval * builtin_put(lenv * e, lval * v) {
         return builtin_var(e, v, "=");
 }
 
-lval* builtin_var(lenv* e, lval * v, char* func) {
+lval * builtin_var(lenv* e, lval * v, char* func) {
         LASSERT_TYPE(func, v, 0, LVAL_QEXPR);
 
         lval * syms = v->cell[0];
