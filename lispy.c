@@ -1129,7 +1129,6 @@ int main(int argc, char** argv) {
         Lispy = mpc_new("lispy");
 
         mpc_result_t r;
-        int is_exit = 0;
 
         mpca_lang(
                 MPCA_LANG_DEFAULT,
@@ -1153,30 +1152,40 @@ int main(int argc, char** argv) {
                 Lispy
         );
 
-
-        puts("Lispy Version 0.0.0.0.8");
-        puts("Press Ctrl+c to Exit\n");
-
         lenv * env = lenv_new();
         lenv_add_builtins(env);
 
-        while (!is_exit) {
-                char* input = readline("lispy> ");
-
-                add_history(input);
-
-                if (mpc_parse("<stdin>", input , Lispy, &r)) {
-                        lval * x = lval_eval(env, lval_read(r.output));
-                        is_exit = (x->type == LVAL_ERR) && (x->errtype == L_ERROR_EXIT);
-                        lval_println(x);
+        if (argc > 2) {
+                for (int i = 1; i < argc; i++) {
+                        lval * args = lval_add(lval_sexpr(), lval_str(argv[i]));
+                        lval * x = builtin_load(env, args);
+                        if (x->type == LVAL_ERR) lval_println(x);
                         lval_del(x);
-                        mpc_ast_delete(r.output);
-                } else {
-                        mpc_err_print(r.error);
-                        mpc_err_delete(r.error);
                 }
+        } else {
+                int is_exit = 0;
 
-                free(input);
+                puts("Lispy Version 0.0.0.0.8");
+                puts("Press Ctrl+c to Exit\n");
+
+                while (!is_exit) {
+                        char* input = readline("lispy> ");
+
+                        add_history(input);
+
+                        if (mpc_parse("<stdin>", input , Lispy, &r)) {
+                                lval * x = lval_eval(env, lval_read(r.output));
+                                is_exit = (x->type == LVAL_ERR) && (x->errtype == L_ERROR_EXIT);
+                                lval_println(x);
+                                lval_del(x);
+                                mpc_ast_delete(r.output);
+                        } else {
+                                mpc_err_print(r.error);
+                                mpc_err_delete(r.error);
+                        }
+
+                        free(input);
+                }
         }
 
         lenv_del(env);
