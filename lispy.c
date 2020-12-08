@@ -1180,7 +1180,7 @@ int main(int argc, char** argv) {
         lenv * env = lenv_new();
         lenv_add_builtins(env);
 
-        if (argc > 2) {
+        if (argc >= 2) {
                 for (int i = 1; i < argc; i++) {
                         lval * args = lval_add(lval_sexpr(), lval_str(argv[i]));
                         lval * x = builtin_load(env, args);
