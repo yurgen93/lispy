@@ -988,6 +988,29 @@ lval* builtin_load(lenv * e, lval * v) {
         }
 }
 
+lval * builtin_print(lenv * e, lval * v) {
+        for (int i = 0; i < v->count; i++) {
+                lval_print(v->cell[i]);
+                putchar(' ');
+        }
+
+        putchar('\n');
+        lval_del(v);
+
+        return lval_sexpr();
+}
+
+lval * builtin_error(lenv * e, lval * v) {
+        LASSERT_NUM("error", v, 1);
+        LASSERT_TYPE("error", v, 0, LVAL_STR);
+
+        lval * err = lval_err(v->cell[0]->str);
+
+        lval_del(v);
+
+        return err;
+}
+
 /* lenv CONSTRUCOR */
 
 lenv * lenv_new(void) {
@@ -1110,6 +1133,8 @@ void lenv_add_builtins(lenv* e) {
         /* System functions */
         lenv_add_builtin(e, "exit", builtin_exit);
         lenv_add_builtin(e, "load", builtin_load);
+        lenv_add_builtin(e, "print", builtin_print);
+        lenv_add_builtin(e, "error", builtin_error);
 
         /* logical functions */
         lenv_add_builtin(e, "if", builtin_if);
