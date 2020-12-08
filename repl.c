@@ -96,6 +96,14 @@ struct lenv {
         char ** syms;
 };
 
+mpc_parser_t * Number;
+mpc_parser_t * Symbol;
+mpc_parser_t * String ;
+mpc_parser_t * Comment;
+mpc_parser_t * Sexpr;
+mpc_parser_t * Qexpr;
+mpc_parser_t * Expr;
+mpc_parser_t * Lispy;
 
 void lval_print(lval * v);
 lval * lval_eval_sexpr(lenv * e, lval * v);
@@ -946,6 +954,40 @@ lval * builtin_if(lenv * e, lval * v) {
         return lval_eval(e, branch);
 }
 
+lval* builtin_load(lenv * e, lval * v) {
+        LASSERT_NUM("load", v, 1);
+        LASSERT_TYPE("load", v, 0, LVAL_STR);
+
+        /* Parse File given by string name */
+        mpc_result_t r;
+
+        if (mpc_parse_contents(v->cell[0]->str, Lispy, &r)) {
+                lval * expr = lval_read(r.output);
+                mpc_ast_delete(r.output);
+
+                while (expr->count) {
+                        lval * x = lval_eval(e, lval_pop(expr, 0));
+                        if (x->type == LVAL_ERR) lval_println(x);
+                        lval_del(x);
+                }
+
+                lval_del(expr);
+                lval_del(v);
+
+                return lval_sexpr();
+        } else {
+                char * err_msg = mpc_err_string(r.error);
+                mpc_err_delete(r.error);
+
+                lval * err = lval_err("Could not load Library %s", err_msg);
+
+                free(err_msg);
+                lval_del(v);
+
+                return err;
+        }
+}
+
 /* lenv CONSTRUCOR */
 
 lenv * lenv_new(void) {
@@ -1067,6 +1109,7 @@ void lenv_add_builtins(lenv* e) {
 
         /* System functions */
         lenv_add_builtin(e, "exit", builtin_exit);
+        lenv_add_builtin(e, "load", builtin_load);
 
         /* logical functions */
         lenv_add_builtin(e, "if", builtin_if);
@@ -1076,15 +1119,14 @@ void lenv_add_builtins(lenv* e) {
 }
 
 int main(int argc, char** argv) {
-        mpc_parser_t
-                *Number = mpc_new("number"),
-                *Symbol = mpc_new("symbol"),
-                *String = mpc_new("string"),
-                *Comment = mpc_new("comment"),
-                *Sexpr = mpc_new("sexpr"),
-                *Qexpr = mpc_new("qexpr"),
-                *Expr = mpc_new("expr"),
-                *Lispy = mpc_new("lispy");
+        Number = mpc_new("number");
+        Symbol = mpc_new("symbol");
+        String = mpc_new("string");
+        Comment = mpc_new("comment");
+        Sexpr = mpc_new("sexpr");
+        Qexpr = mpc_new("qexpr");
+        Expr = mpc_new("expr");
+        Lispy = mpc_new("lispy");
 
         mpc_result_t r;
         int is_exit = 0;
