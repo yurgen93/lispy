@@ -420,6 +420,7 @@ lval * lval_read(mpc_ast_t * tag) {
                 if (strcmp(child_tag->contents, "{") == 0) continue;
                 if (strcmp(child_tag->contents, "}") == 0) continue;
                 if (strcmp(child_tag->tag, "regex") == 0) continue;
+                if (strstr(child_tag->tag, "comment")) continue;
 
                 x = lval_add(x, lval_read(child_tag));
         }
@@ -1079,6 +1080,7 @@ int main(int argc, char** argv) {
                 *Number = mpc_new("number"),
                 *Symbol = mpc_new("symbol"),
                 *String = mpc_new("string"),
+                *Comment = mpc_new("comment"),
                 *Sexpr = mpc_new("sexpr"),
                 *Qexpr = mpc_new("qexpr"),
                 *Expr = mpc_new("expr"),
@@ -1091,16 +1093,18 @@ int main(int argc, char** argv) {
                 MPCA_LANG_DEFAULT,
                 " \
                 number : /-?[0-9]+/ ; \
-                string : /\"((\\\\.)|[^\"])*\"/ ; \
                 symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&\%|]+/ ; \
+                string : /\"((\\\\.)|[^\"])*\"/ ; \
+                comment : /;[^\\r\\n]*/ ;  \
                 sexpr  : '(' <expr>* ')' ; \
                 qexpr  : '{' <expr>* '}' ; \
-                expr   : <number> | <symbol> | <string> | <sexpr> | <qexpr> ; \
+                expr   : <number> | <symbol> | <string> | <comment> | <sexpr> | <qexpr> ; \
                 lispy  : /^/ <expr>* /$/ ; \
                 ",
                 Number,
                 Symbol,
                 String,
+                Comment,
                 Sexpr,
                 Qexpr,
                 Expr,
@@ -1135,7 +1139,7 @@ int main(int argc, char** argv) {
 
         lenv_del(env);
 
-        mpc_cleanup(7, Number, Symbol, String, Sexpr, Qexpr, Expr, Lispy);
+        mpc_cleanup(8, Number, Symbol, String, Comment, Sexpr, Qexpr, Expr, Lispy);
 
         return 0;
 }
