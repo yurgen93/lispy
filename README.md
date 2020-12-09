@@ -26,8 +26,3 @@ lispy> + 3 (% 10 3)
 4
 lispy>
 ```
-
-### TODO
-* add tests
-* extract some function to modules
-* run via lldb
