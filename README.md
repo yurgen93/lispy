@@ -30,5 +30,4 @@ lispy>
 ### TODO
 * add tests
 * extract some function to modules
-* add makefile for running compilation, tests, memory checks
 * run via lldb
