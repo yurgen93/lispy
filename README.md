@@ -5,14 +5,17 @@ created using http://www.buildyourownlisp.com/
 
 ### Commands
 ```bash
-# compile
-gcc -std=c99 -Wall lispy.c mpc.c -ledit -lm -o lispy
+# build
+> make build
 
 # run REPL
-./lispy
+> ./lispy
 
-# with memory check
-gcc -std=c99 -Wall lispy.c mpc.c -ledit -lm -fsanitize=address -fno-common -fno-omit-frame-pointer -o lispy
+# build with memory check
+> make memcheck
+
+# run file
+> ./lispy hello_world.lispy
 ```
 
 ### REPL example
