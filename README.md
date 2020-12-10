@@ -15,7 +15,8 @@ created using http://www.buildyourownlisp.com/
 > make memcheck
 
 # run file
-> ./lispy hello_world.lispy
+> ./lispy examples/hello_world.lispy
+"Hello, World!"
 ```
 
 ### REPL example

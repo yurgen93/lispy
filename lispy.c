@@ -1231,7 +1231,7 @@ int main(int argc, char** argv) {
         } else {
                 int is_exit = 0;
 
-                puts("Lispy Version 0.0.0.0.8");
+                puts("Lispy Version 0.0.0.1.0");
                 puts("Press Ctrl+c to Exit\n");
 
                 while (!is_exit) {
