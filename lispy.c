@@ -652,6 +652,16 @@ lval * builtin_op(lenv * e, lval * v, char * op) {
                         x->num %= y->num;
                 }
                 if (strcmp(op, "^") == 0) x->num = (int)pow(x->num, y->num);
+                if (strcmp(op, "max") == 0) {
+                        if (x->num < y->num) {
+                                x->num = y->num;
+                        }
+                }
+                if (strcmp(op, "min") == 0) {
+                        if (x->num > y->num) {
+                                x->num = y->num;
+                        }
+                }
 
                 lval_del(y);
 
@@ -684,6 +694,14 @@ lval * builtin_mod(lenv * e, lval * a) {
 
 lval * builtin_power(lenv * e, lval * a) {
         return builtin_op(e, a, "^");
+}
+
+lval * builtin_max(lenv * e, lval * a) {
+        return builtin_op(e, a, "max");
+}
+
+lval * builtin_min(lenv * e, lval * a) {
+        return builtin_op(e, a, "min");
 }
 
 /* BUILTIN FUNCTIONS */
@@ -1134,6 +1152,9 @@ void lenv_add_builtins(lenv* e) {
         lenv_add_builtin(e, "/", builtin_div);
         lenv_add_builtin(e, "\%", builtin_mod);
         lenv_add_builtin(e, "^", builtin_power);
+        lenv_add_builtin(e, "max", builtin_max);
+        lenv_add_builtin(e, "min", builtin_min);
+
 
 
         /* Comparasion functions */

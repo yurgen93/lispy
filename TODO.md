@@ -2,9 +2,9 @@
 - [ ] add tests
 - [ ] extract some function to modules
 - [ ] run via lldb
-- [ ] Add the operator `^`, which raises one number to another. For example ^ 4 2 is 16
-- [ ] Add the function `min`, which returns the smallest number. For example min 1 5 3 is 1
-- [ ] Add the function `max`, which returns the biggest number. For example max 1 5 3 is 5
+- [X] Add the operator `^`, which raises one number to another. For example ^ 4 2 is 16
+- [X] Add the function `min`, which returns the smallest number. For example min 1 5 3 is 1
+- [X] Add the function `max`, which returns the biggest number. For example max 1 5 3 is 5
 - [ ] Extend parsing and evaluation to support decimal types using a double field.
 - [ ] Add a builtin function `cons` that takes a value and a Q-Expression and appends it to the front.
 - [ ] Add a builtin function `len` that returns the number of elements in a Q-Expression.
