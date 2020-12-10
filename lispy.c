@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "mpc.h"
 
@@ -650,6 +651,7 @@ lval * builtin_op(lenv * e, lval * v, char * op) {
 
                         x->num %= y->num;
                 }
+                if (strcmp(op, "^") == 0) x->num = (int)pow(x->num, y->num);
 
                 lval_del(y);
 
@@ -678,6 +680,10 @@ lval * builtin_div(lenv * e, lval * a) {
 
 lval * builtin_mod(lenv * e, lval * a) {
         return builtin_op(e, a, "\%");
+}
+
+lval * builtin_power(lenv * e, lval * a) {
+        return builtin_op(e, a, "^");
 }
 
 /* BUILTIN FUNCTIONS */
@@ -1127,6 +1133,8 @@ void lenv_add_builtins(lenv* e) {
         lenv_add_builtin(e, "*", builtin_mul);
         lenv_add_builtin(e, "/", builtin_div);
         lenv_add_builtin(e, "\%", builtin_mod);
+        lenv_add_builtin(e, "^", builtin_power);
+
 
         /* Comparasion functions */
         lenv_add_builtin(e, ">", builtin_gt);
@@ -1171,7 +1179,7 @@ int main(int argc, char** argv) {
                 MPCA_LANG_DEFAULT,
                 " \
                 number : /-?[0-9]+/ ; \
-                symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&\%|]+/ ; \
+                symbol : /[a-zA-Z0-9_+\\-*\\/\\\\^=<>!&\%|]+/ ; \
                 string : /\"((\\\\.)|[^\"])*\"/ ; \
                 comment : /;[^\\r\\n]*/ ;  \
                 sexpr  : '(' <expr>* ')' ; \
