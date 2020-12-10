@@ -39,6 +39,10 @@ void add_history(char* unused) {}
                 LASSERT(args, args->count == num, \
                 "Function '%s' passed incorrect number of arguments. Got %d, expected %d", func, args->count, num)
 
+#define LASSERT_NUM_AT_LEAST(func, args, num) \
+                LASSERT(args, args->count >= num, \
+                "Function '%s' passed incorrect number of arguments. Got %d, expected %d or greater", func, args->count, num)
+
 #define LASSERT_NOT_EMPTY(func, args, index) \
                 LASSERT(args, args->count != 0, \
                 "Function '%s' passed {} for argument %d", func, index)
@@ -880,22 +884,31 @@ lval * builtin_ne(lenv * e, lval * v) {
 
 /* logical operators */
 lval * builtin_logical_and(lenv * e, lval * v) {
-        LASSERT_NUM("&&", v, 2);
-        LASSERT_TYPE("&&", v, 0, LVAL_NUM);
-        LASSERT_TYPE("&&", v, 1, LVAL_NUM);
+        LASSERT_NUM_AT_LEAST("&&", v, 2);
 
-        int r = v->cell[0]->num && v->cell[1]->num;
+        for (int i = 0; i < v->count; i++)
+                LASSERT_TYPE("&&", v, i, LVAL_NUM);
+
+        int r = 1;
+
+        for (int i = 0; i < v->count; i++)
+                r = r && v->cell[i]->num;
 
         lval_del(v);
         return lval_num(r);
 }
 
 lval * builtin_logical_or(lenv * e, lval * v) {
-        LASSERT_NUM("||", v, 2);
-        LASSERT_TYPE("||", v, 0, LVAL_NUM);
-        LASSERT_TYPE("||", v, 1, LVAL_NUM);
+        LASSERT_NUM_AT_LEAST("||", v, 2);
 
-        int r = v->cell[0]->num || v->cell[1]->num;
+        for (int i = 0; i < v->count; i++)
+                LASSERT_TYPE("||", v, i, LVAL_NUM);
+
+
+        int r = 0;
+
+        for (int i = 0; i < v->count; i++)
+                r = r || v->cell[i]->num;
 
         lval_del(v);
         return lval_num(r);
