@@ -1,7 +1,7 @@
 ### TODO
 - [ ] add tests
-- [ ] extract some function to modules
-- [ ] run via lldb
+- [X] extract some function to modules
+- [ ] check memory leaks via lldb
 - [X] Add the operator `^`, which raises one number to another. For example ^ 4 2 is 16
 - [X] Add the function `min`, which returns the smallest number. For example min 1 5 3 is 1
 - [X] Add the function `max`, which returns the biggest number. For example max 1 5 3 is 5
