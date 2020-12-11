@@ -3,6 +3,7 @@
 #include "mpc.h"
 #include "parsers.h"
 #include "builtin.h"
+#include "eval.h"
 
 /* BUILTIN MATHEMATICAL FUNCTIONS */
 
@@ -406,7 +407,7 @@ lval * builtin_if(lenv * e, lval * v) {
         return lval_eval(e, branch);
 }
 
-lval* builtin_load(lenv * e, lval * v) {
+lval * builtin_load(lenv * e, lval * v) {
         LASSERT_NUM("load", v, 1);
         LASSERT_TYPE("load", v, 0, LVAL_STR);
 

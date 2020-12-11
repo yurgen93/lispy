@@ -20,7 +20,7 @@ build:
 memcheck:
 	@echo Compiling $@
 	@$(CC) $(ASANFLAGS) $(CFLAGS) *.c -o memcheck.out $(LIBS)
-	@./memcheck.out
+	@./memcheck.out examples/hello_world.lispy
 	@echo "Memory check passed"
 
 .PHONY: clean
