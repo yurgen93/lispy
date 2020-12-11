@@ -123,27 +123,75 @@ lval * builtin_min(lenv * e, lval * a) {
 
 /* BUILTIN FUNCTIONS */
 
-lval * builtin_head(lenv * e, lval * v) {
-        LASSERT_NUM("head", v, 1);
-        LASSERT_TYPE("head", v, 0, LVAL_QEXPR);
-        LASSERT_NOT_EMPTY("head", v, 0);
+/* builtin 'head' variants */
+lval * builtin_head_str(lenv * e, lval * v) {
+        if (strlen(v->cell[0]->str) == 0) return lval_str("");
 
+        char tmp[] = " ";
+        tmp[0] = v->cell[0]->str[0];
+
+        return lval_str(tmp);
+}
+
+lval * builtin_head_qexpr(lenv * e, lval * v) {
         lval * x = lval_take(v, 0);
 
         while (x->count > 1) lval_del(lval_pop(x, 1));
         return x;
 }
 
-lval * builtin_tail(lenv * e, lval * v) {
-        LASSERT_NUM("tail", v, 1);
-        LASSERT_TYPE("tail", v, 0, LVAL_QEXPR);
-        LASSERT_NOT_EMPTY("tail", v, 0);
+lval * builtin_head(lenv * e, lval * v) {
+        LASSERT_NUM("head", v, 1);
+        LASSERT_NOT_EMPTY("head", v, 0);
 
+        if (v->cell[0]->type == LVAL_STR) return builtin_head_str(e, v);
+        if (v->cell[0]->type == LVAL_QEXPR) return builtin_head_qexpr(e, v);
+
+        lval * err = lval_err(
+                "Function 'head' passed incorrect type of argument 0. Got %s, expected %s or %s",
+                ltype_name(v->cell[0]->type),
+                ltype_name(LVAL_STR),
+                ltype_name(LVAL_QEXPR)
+        );
+
+        lval_del(v);
+
+        return err;
+
+}
+
+/* builtin 'tail' variants */
+lval * builtin_tail_str(lenv * e, lval * v) {
+        if (strlen(v->cell[0]->str) == 0) return lval_str("");
+
+        return lval_str(v->cell[0]->str + 1);
+}
+
+lval * builtin_tail_qexpr(lenv * e, lval * v) {
         lval * x = lval_take(v, 0);
 
         lval_del(lval_pop(x, 0));
 
         return x;
+}
+
+lval * builtin_tail(lenv * e, lval * v) {
+        LASSERT_NUM("tail", v, 1);
+        LASSERT_NOT_EMPTY("tail", v, 0);
+
+        if (v->cell[0]->type == LVAL_STR) return builtin_tail_str(e, v);
+        if (v->cell[0]->type == LVAL_QEXPR) return builtin_tail_qexpr(e, v);
+
+        lval * err = lval_err(
+                "Function 'tail' passed incorrect type of argument 0. Got %s, expected %s or %s",
+                ltype_name(v->cell[0]->type),
+                ltype_name(LVAL_STR),
+                ltype_name(LVAL_QEXPR)
+        );
+
+        lval_del(v);
+
+        return err;
 }
 
 lval * builtin_list(lenv * e, lval * v) {
@@ -160,10 +208,33 @@ lval * builtin_eval(lenv * e, lval * v) {
         return lval_eval(e, x);
 }
 
-lval * builtin_join(lenv * e, lval * v) {
-        for (int i = 0; i < v->count; i++) {
+/* builtin 'join' variants */
+lval * builtin_join_str(lenv * e, lval * v) {
+        for (int i = 0; i < v->count; i++)
+                LASSERT_TYPE("join", v, i, LVAL_STR);
+
+        int len_sum = 0;
+
+        for (int i = 0; i < v->count; i++)
+                len_sum += strlen(v->cell[i]->str);
+
+        char * buffer = calloc(len_sum + 1, 1);
+
+        for (int i = 0; i < v->count; i++)
+                strcpy(buffer + strlen(buffer), v->cell[i]->str);
+
+        lval * str = lval_str(buffer);
+
+        free(buffer);
+
+        lval_del(v);
+
+        return str;
+}
+
+lval * builtin_join_qexpr(lenv * e, lval * v) {
+        for (int i = 0; i < v->count; i++)
                 LASSERT_TYPE("join", v, i, LVAL_QEXPR);
-        }
 
         lval * x = lval_pop(v, 0);
 
@@ -173,6 +244,24 @@ lval * builtin_join(lenv * e, lval * v) {
         lval_del(v);
 
         return x;
+}
+
+lval * builtin_join(lenv * e, lval * v) {
+        LASSERT_NUM_AT_LEAST("join", v, 1);
+
+        if (v->cell[0]->type == LVAL_STR) return builtin_join_str(e, v);
+        if (v->cell[0]->type == LVAL_QEXPR) return builtin_join_qexpr(e, v);
+
+        lval * err = lval_err(
+                "Function 'join' passed incorrect type of argument 0. Got %s, expected %s or %s",
+                ltype_name(v->cell[0]->type),
+                ltype_name(LVAL_STR),
+                ltype_name(LVAL_QEXPR)
+        );
+
+        lval_del(v);
+
+        return err;
 }
 
 lval * builtin_lambda(lenv * e, lval * v) {

@@ -12,9 +12,9 @@
 - [ ] Write a function for printing out all the named values in an environment.
 - [ ] Add a specific boolean type to the language with the builtin variables `true` and `false`
 - [ ] Define in Lisp logical operator functions such as `or`, `and` and `not`
-- [ ] Adapt the builtin function `join` to work on strings.
-- [ ] Adapt the builtin function `head` to work on strings.
-- [ ] Adapt the builtin function `tail` to work on strings.
+- [X] Adapt the builtin function `join` to work on strings.
+- [X] Adapt the builtin function `head` to work on strings.
+- [X] Adapt the builtin function `tail` to work on strings.
 - [ ] Create a builtin function `read` that reads in and converts a string to a Q-expression.
 - [ ] Create a builtin function `show` that can print the contents of strings as it is (unescaped).
 - [ ] Create a special value `ok` to return instead of empty expressions ().
