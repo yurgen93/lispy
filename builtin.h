@@ -3,6 +3,7 @@
 
 #include "lval.h"
 #include "lenv.h"
+#include "parsers.h"
 
 /* BUILTIN FUNCTIONS */
 

@@ -4,6 +4,10 @@
 #include <math.h>
 
 #include "mpc.h"
+#include "parsers.h"
+#include "lval.h"
+#include "lenv.h"
+#include "builtin.h"
 
 #ifdef _WIN32
 
@@ -23,19 +27,6 @@ void add_history(char* unused) {}
 #else
 #include <editline/readline.h>
 #endif
-
-mpc_parser_t * Number;
-mpc_parser_t * Symbol;
-mpc_parser_t * String ;
-mpc_parser_t * Comment;
-mpc_parser_t * Sexpr;
-mpc_parser_t * Qexpr;
-mpc_parser_t * Expr;
-mpc_parser_t * Lispy;
-
-#include "lval.h"
-#include "lenv.h"
-#include "builtin.h"
 
 void lval_print(lval * v);
 lval * lval_eval_sexpr(lenv * e, lval * v);
@@ -58,7 +49,6 @@ void lenv_def(lenv * e, lval * name, lval * value);
 lval * builtin_eval(lenv * e, lval * v);
 lval * builtin_var(lenv * e, lval * v, char * op);
 lval * builtin_list(lenv * e, lval * v);
-
 
 /* evaluation functions */
 
