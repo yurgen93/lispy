@@ -29,28 +29,6 @@ void add_history(char* unused) {}
 #include <editline/readline.h>
 #endif
 
-void lval_print(lval * v);
-lval * lval_eval_sexpr(lenv * e, lval * v);
-
-lval * lval_pop(lval * v, int i);
-lval * lval_take(lval * v, int i);
-lval * lval_copy(lval * v);
-lval * lval_call(lenv * e, lval * func, lval * args);
-
-lenv * lenv_new(void);
-lenv * lenv_copy(lenv * e);
-void lenv_del(lenv * e);
-
-lval * builtin_op(lenv * e, lval * v, char * op);
-
-lval * lenv_get(lenv * e, lval * name);
-void lenv_put(lenv * e, lval * name, lval * value);
-void lenv_def(lenv * e, lval * name, lval * value);
-
-lval * builtin_eval(lenv * e, lval * v);
-lval * builtin_var(lenv * e, lval * v, char * op);
-lval * builtin_list(lenv * e, lval * v);
-
 void lenv_add_builtin(lenv * e, char * name, lbuiltin fun) {
         lval * name_symbol = lval_sym(name);
         lval * value = lval_fun(fun, name);
